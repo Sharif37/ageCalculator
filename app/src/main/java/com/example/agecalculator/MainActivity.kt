@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.agecalculator.ui.theme.AgeCalculatorTheme
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,7 +56,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                   AgeCalculator("calculate your ")
+                    AgeCalculator("calculate your ")
 
                 }
             }
@@ -83,7 +84,7 @@ fun AgeCalculator(msg:String) {
             color = Color(125,0,0),
             modifier=Modifier.
             padding(10.dp)
-            )
+        )
         Text(text ="age".uppercase(),
             fontSize = 30.sp,
             modifier=Modifier.background(Color.Cyan),
@@ -113,37 +114,40 @@ fun AgeCalculator(msg:String) {
 
         Spacer(modifier = Modifier.height(16.dp))
         val selectedDate by remember { mutableStateOf(Calendar.getInstance()) }
-        val dateFormat = remember { SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()) }
+        val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
         val selectedDateText = remember { mutableStateOf("Select Date: ") }
+
         val context = LocalContext.current
-       fun datePickerShow(){
+        fun datePickerShow(){
+            DatePickerDialog(
+                context,
+                { _, year, month, dayOfMonth ->
+                    selectedDate.set(year, month, dayOfMonth)
+                    selectedDateText.value = "Select Date: ${dateFormat.format(selectedDate.time)}"
+                },
+                selectedDate.get(Calendar.YEAR),
+                selectedDate.get(Calendar.MONTH),
+                selectedDate.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }
 
-           DatePickerDialog(
-               context,
-               { _, year, month, dayOfMonth ->
-                   selectedDate.set(year, month, dayOfMonth)
-                   selectedDateText.value = "Select Date: ${dateFormat.format(selectedDate.time)}"
-               },
-               selectedDate.get(Calendar.YEAR),
-               selectedDate.get(Calendar.MONTH),
-               selectedDate.get(Calendar.DAY_OF_MONTH)
-           ).show()
-       }
+        fun calculateInMin(selectDate: Calendar):Int{
+            val today=Calendar.getInstance()
+            /* Log.d("date",today.toString())*/
 
-       fun calculateInMin(selectDate: Calendar):Int{
-           val today=Calendar.getInstance()
-           Log.d("date",today.toString())
-           var year=today.get(Calendar.YEAR)-selectDate.get(Calendar.YEAR)
-           val month=today.get(Calendar.MONTH)-selectDate.get(Calendar.MONTH)
-           val day=today.get(Calendar.DAY_OF_MONTH)-selectDate.get(Calendar.DAY_OF_MONTH)
-           Log.d("date format","$year $month $day ")
+            var year=today.get(Calendar.YEAR)-selectDate.get(Calendar.YEAR)
+            var month=today.get(Calendar.MONTH)-selectDate.get(Calendar.MONTH)
+            val day=today.get(Calendar.DAY_OF_MONTH)-selectDate.get(Calendar.DAY_OF_MONTH)
 
-           if (month < 0 || (month == 0 && day < 0)) {
-               year-= 1
-           }
-           return year*365*86400 + month*30*86400 + day*86400
 
-       }
+            if (month < 0 ) {
+                year-= 1
+            }
+            Log.d("date format","$year $month $day ")
+            return year*365*1440 + month*30*1440 + day*1440
+
+        }
+
 
 
         Box(
@@ -171,7 +175,7 @@ fun AgeCalculator(msg:String) {
 
         Button(
             onClick = {
-               ageInMinutes=calculateInMin(selectedDate)
+                ageInMinutes=calculateInMin(selectedDate)
             },
             modifier = Modifier
                 .fillMaxWidth()
